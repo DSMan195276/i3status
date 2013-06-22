@@ -289,6 +289,7 @@ int main(int argc, char *argv[]) {
                 CFG_STR("device", "default", CFGF_NONE),
                 CFG_STR("mixer", "Master", CFGF_NONE),
                 CFG_INT("mixer_idx", 0, CFGF_NONE),
+                CFG_STR("mpc", "[[%artist% - ]%title%]|[%file%]", CFGF_NONE),
                 CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
@@ -515,7 +516,8 @@ int main(int argc, char *argv[]) {
                                 print_volume(json_gen, buffer, cfg_getstr(sec, "format"),
                                              cfg_getstr(sec, "device"),
                                              cfg_getstr(sec, "mixer"),
-                                             cfg_getint(sec, "mixer_idx"));
+                                             cfg_getint(sec, "mixer_idx"),
+                                             cfg_getstr(sec, "mpc"));
                                 SEC_CLOSE_MAP;
                         }
 
