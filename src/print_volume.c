@@ -26,7 +26,7 @@
 #include "i3status.h"
 #include "queue.h"
 
-void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *device, const char *mixer, int mixer_idx, const char *mpc) {
+void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *device, const char *mixer, int mixer_idx) {
         char *outwalk = buffer;
 	int pbval = 1;
 
@@ -44,13 +44,6 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 	snd_mixer_elem_t *elem;
 	long min, max, val;
 	int avg;
-        unsigned int output_len = 0, pid = 0;
-        char *mpc_output = NULL, mpc_cmd[2014], pid_line[1024];
-        FILE *mpc_prog;
-        ssize_t char_len = 0;
-        FILE *pianobar_cmd;
-
-        int pand_flag = 0;
 
 	if ((err = snd_mixer_open(&m, 0)) < 0) {
 		fprintf(stderr, "i3status: ALSA: Cannot open mixer: %s\n", snd_strerror(err));
@@ -117,41 +110,6 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 
 	snd_mixer_close(m);
 	snd_mixer_selem_id_free(sid);
-        
-        if (mpc[0] != '\0') {
-                mpc_cmd[0] = '\0';
-                strcat (mpc_cmd, "mpc -f \"");
-                strcat (mpc_cmd, mpc);
-                strcat (mpc_cmd, "\" 2>&1");
-                mpc_prog = popen(mpc_cmd, "r");
-                if (mpc_prog != NULL) {
-                        char_len = getline(&mpc_output, &output_len, mpc_prog);
-                        if (char_len > 0) 
-                                mpc_output[char_len-1] = '\0';
-                        
-                        pclose(mpc_prog);
-                        if ((strncmp(mpc_output, "error: Connection refused", sizeof("error: Connection refused") - 1))==0) {
-                                
-                              mpc_output[0] = '\0'; 
-                        }
-                }
-                if (mpc_output==NULL||mpc_output[0]=='\0') {
-                        pianobar_cmd = popen("pidof pianobarfly", "r");
-                        fgets(pid_line, sizeof(pid_line), pianobar_cmd);
-                        pid = strtoul(pid_line, NULL, 10);
-                        pclose(pianobar_cmd);
-                        if (pid > 0) {
-                                pianobar_cmd = fopen("/tmp/pandora-playing.txt", "r");
-                                if (pianobar_cmd!=NULL) {
-                                        char_len = getline(&mpc_output, &output_len, pianobar_cmd);
-                                        if (char_len > 0)
-                                                mpc_output[char_len-1] = '\0';
-                                        pand_flag = 1;
-                                } 
-                                fclose(pianobar_cmd);
-                        }
-                }
-        }
 
 	const char *walk = fmt;
 	for (; *walk != '\0'; walk++) {
@@ -163,16 +121,6 @@ void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *
 			outwalk += sprintf(outwalk, "%d%%", avg);
 			walk += strlen("volume");
 		}
-                if (BEGINS_WITH(walk+1, "mpc")) {
-                        if (mpc_output[0] != '\0') {
-                                if (!pand_flag) {
-                                        outwalk += sprintf(outwalk, " MPD: %s", mpc_output);
-                                } else {
-                                        outwalk += sprintf(outwalk, " Pandora: %s", mpc_output);
-                                }
-                        }
-                        walk += strlen("mpc");
-                }
 	}
 #endif
 #if defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
@@ -222,7 +170,4 @@ out:
 
         if (!pbval)
 		END_COLOR;
-
-        if (mpc_output!=NULL) 
-                free (mpc_output);
 }

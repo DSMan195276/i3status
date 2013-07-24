@@ -28,6 +28,13 @@
 #include <sys/time.h>
 #include <locale.h>
 
+#include <mpd/client.h>
+#include <mpd/status.h>
+#include <mpd/entity.h>
+#include <mpd/search.h>
+#include <mpd/tag.h>
+#include <mpd/message.h>
+
 #include <yajl/yajl_gen.h>
 #include <yajl/yajl_version.h>
 
@@ -289,7 +296,22 @@ int main(int argc, char *argv[]) {
                 CFG_STR("device", "default", CFGF_NONE),
                 CFG_STR("mixer", "Master", CFGF_NONE),
                 CFG_INT("mixer_idx", 0, CFGF_NONE),
-                CFG_STR("mpc", "[[%artist% - ]%title%]|[%file%]", CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
+                CFG_END()
+        };
+
+        cfg_opt_t mpd_opts[] = {
+                CFG_STR("host", "localhost", CFGF_NONE),
+                CFG_INT("port", 6600, CFGF_NONE),
+                CFG_STR("password", NULL, CFGF_NONE),
+                CFG_CUSTOM_COLOR_OPTS,
+                CFG_END()
+        };
+
+        cfg_opt_t file_opts[] = {
+                CFG_STR("format", "Pandora: %file", CFGF_NONE),
+                CFG_STR("file", NULL, CFGF_NONE),
+                CFG_BOOL("display_if_empty", 1, CFGF_NONE),
                 CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
@@ -310,6 +332,8 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("ddate", ddate_opts, CFGF_NONE),
                 CFG_SEC("load", load_opts, CFGF_NONE),
                 CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
+                CFG_SEC("mpd", mpd_opts, CFGF_NONE),
+                CFG_SEC("file", file_opts, CFGF_TITLE | CFGF_MULTI),
                 CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
@@ -322,6 +346,7 @@ int main(int argc, char *argv[]) {
                 {"version", no_argument, 0, 'v'},
                 {0, 0, 0, 0}
         };
+        
 
         struct sigaction action;
         memset(&action, 0, sizeof(struct sigaction));
@@ -425,6 +450,7 @@ int main(int argc, char *argv[]) {
 
         int interval = cfg_getint(cfg_general, "interval");
 
+
         /* One memory page which each plugin can use to buffer output.
          * Even though it’s unclean, we just assume that the user will not
          * specify a format string which expands to something longer than 4096
@@ -516,8 +542,7 @@ int main(int argc, char *argv[]) {
                                 print_volume(json_gen, buffer, cfg_getstr(sec, "format"),
                                              cfg_getstr(sec, "device"),
                                              cfg_getstr(sec, "mixer"),
-                                             cfg_getint(sec, "mixer_idx"),
-                                             cfg_getstr(sec, "mpc"));
+                                             cfg_getint(sec, "mixer_idx"));
                                 SEC_CLOSE_MAP;
                         }
 
@@ -531,6 +556,19 @@ int main(int argc, char *argv[]) {
                                 SEC_OPEN_MAP("cpu_usage");
                                 print_cpu_usage(json_gen, buffer, cfg_getstr(sec, "format"));
                                 SEC_CLOSE_MAP;
+                        }
+
+                        CASE_SEC("mpd") {
+                                //SEC_OPEN_MAP("mpd");
+                                print_mpd(json_gen, buffer, cfg_getstr(sec, "host"), cfg_getint(sec, "port"), cfg_getstr(sec, "password"));
+                                //SEC_CLOSE_MAP;
+                        }
+
+                        CASE_SEC("file") {
+                                
+                                //SEC_OPEN_MAP("file");
+                                print_file(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "file"), cfg_getbool(sec, "display_if_empty"));
+                                //SEC_CLOSE_MAP;
                         }
                 }
                 if (output_format == O_I3BAR) {
