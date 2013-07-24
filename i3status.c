@@ -316,6 +316,11 @@ int main(int argc, char *argv[]) {
                 CFG_END()
         };
 
+        cfg_opt_t window_title_opts[] = {
+                CFG_STR("format", "%title", CFGF_NONE),
+                CFG_END()
+        };
+
         cfg_opt_t opts[] = {
                 CFG_STR_LIST("order", "{}", CFGF_NONE),
                 CFG_SEC("general", general_opts, CFGF_NONE),
@@ -334,6 +339,7 @@ int main(int argc, char *argv[]) {
                 CFG_SEC("cpu_usage", usage_opts, CFGF_NONE),
                 CFG_SEC("mpd", mpd_opts, CFGF_NONE),
                 CFG_SEC("file", file_opts, CFGF_TITLE | CFGF_MULTI),
+                CFG_SEC("window_title", window_title_opts, CFGF_NONE),
                 CFG_CUSTOM_COLOR_OPTS,
                 CFG_END()
         };
@@ -569,6 +575,12 @@ int main(int argc, char *argv[]) {
                                 //SEC_OPEN_MAP("file");
                                 print_file(json_gen, buffer, cfg_getstr(sec, "format"), cfg_getstr(sec, "file"), cfg_getbool(sec, "display_if_empty"));
                                 //SEC_CLOSE_MAP;
+                        }
+
+                        CASE_SEC("window_title") {
+                                SEC_OPEN_MAP("window_title");
+                                print_window_title(json_gen, buffer, cfg_getstr(sec, "format"));
+                                SEC_CLOSE_MAP;
                         }
                 }
                 if (output_format == O_I3BAR) {

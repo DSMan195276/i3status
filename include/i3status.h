@@ -156,6 +156,7 @@ void print_load(yajl_gen json_gen, char *buffer, const char *format, const int m
 void print_volume(yajl_gen json_gen, char *buffer, const char *fmt, const char *device, const char *mixer, int mixer_idx);
 void print_file(yajl_gen json_gen, char *buffer, const char *fmt, const char *file, bool display_if_empty);
 void print_mpd(yajl_gen json_gen, char *buffer, const char *host, const int port, const char *pass);
+void print_window_title(yajl_gen json_gen, char *buffer, const char *fmt);
 bool process_runs(const char *path);
 
 /* socket file descriptor for general purposes */
